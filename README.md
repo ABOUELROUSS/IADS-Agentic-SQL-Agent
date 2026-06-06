@@ -40,6 +40,56 @@ Agent: Electronics generated GBP 4.2M in Q1 2026, up 18% year-on-year.
             FETCH FIRST 5 ROWS ONLY;
 ```
 
+## Chatbot Demo
+
+The Streamlit chatbot is designed as an end-to-end analytics workspace: the user
+can ask a question, inspect the answer, switch chart types, open a plain-English
+summary, and expand the calculation trace to see the generated SQL and reasoning.
+
+### Start Screen And Connection State
+
+![Chatbot home screen](docs/demo/chatbot-home.png)
+
+The home screen shows the chatbot entry point, backend connection status, optional
+database upload control, and suggested starter questions. The sidebar confirms
+whether the backend is connected and whether the app is using the configured data
+source.
+
+### Chart Options
+
+![Chart options demo](docs/demo/chart-options.png)
+
+When a query returns numeric data, the UI can visualize the result. Users can
+switch between chart types such as **Bar**, **Line**, and **Pie** without changing
+the underlying SQL result. This is useful when the same answer needs to be viewed
+as a ranking, a trend, or a share-of-total comparison.
+
+### Optional Summary
+
+![Summary panel demo](docs/demo/summary-panel.png)
+
+The **Show summary** button opens a concise natural-language explanation of the
+result. It turns the returned table into a business-readable answer and highlights
+key insights such as the number of rows returned and the leading values.
+
+### Explainability: How The AI Calculated The Answer
+
+![Explainability panel demo](docs/demo/explainability-panel.png)
+
+The **How did the AI calculate this?** section exposes the reasoning trace behind
+the answer. It shows the retrieved context, support check, SQL generation method,
+validation result, execution status, answer provider, and the generated SQL. This
+keeps the system auditable instead of hiding the query logic behind the chatbot.
+
+### Follow-Up Suggestions And Result Actions
+
+![Follow-up suggestions demo](docs/demo/follow-up-suggestions.png)
+
+After a response, the chatbot suggests useful next actions such as sorting,
+limiting to a top-N view, modifying the query, or charting the result. These
+follow-ups are handled by the action classifier so the system knows whether to
+reuse the cached result, modify the previous SQL, or run a fresh query.
+
 ## Architecture
 
 A multi-stage agentic pipeline. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
