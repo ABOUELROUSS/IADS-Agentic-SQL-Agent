@@ -48,22 +48,69 @@ for the full design.
 ```text
 User question
    |
-[Planner] -> [Schema Retriever / RAG] -> [SQL Generator]
-                                           |
-                                      [Validator]
-                                           |
-                                      [Safe Executor]
-                                           |
-                                      [Critic / Reflector]
-                                           |
-                                      [Summariser]
-                                           |
-                                      Response
+[Intent + Action Classifier]
+   |
+   |-- RUN_NEW_SQL ------------.
+   |-- MODIFY_PREVIOUS_SQL ----+--> [Planner] -> [Oracle Vector RAG]
+   |-- TRANSFORM_PREVIOUS_RESULT     |              |
+   |          |                      |              v
+   |          v                      '------> [SQL Generator / Select AI]
+   |   [Cached Result Memory]                       |
+   |          |                                      v
+   |          '------------------------------> [SQL Validator]
+   |                                                 |
+   |                                                 v
+   |                                          [Safe Executor]
+   |                                                 |
+   |                                                 v
+   |                                      [Reflector / Retry Logic]
+   |                                                 |
+   |                                                 v
+   |                                      [Summariser + Confidence]
+   |                                                 |
+   |                                                 v
+   |                                           Response + Explanation
 ```
 
 The system combines agentic planning, retrieval-augmented generation, Oracle Select
 AI, SQL safety checks, cached conversation memory, explainability, and a Streamlit
 chat interface.
+
+## What Makes It Innovative
+
+The project is not a simple text-to-SQL demo. It is an agentic analytics workflow
+designed to decide **what kind of action** the user wants before generating SQL.
+
+- **LLM action classifier before SQL generation**: each user prompt is classified
+  into `RUN_NEW_SQL`, `TRANSFORM_PREVIOUS_RESULT`, `MODIFY_PREVIOUS_SQL`, or
+  `ASK_CLARIFICATION`. This prevents follow-up prompts such as "sort them
+  ascendingly" from accidentally querying the full database again.
+- **Planner for complex analytical questions**: the planner detects questions
+  involving comparison, trends, growth, reasons, differences, or "why" analysis.
+  Simple questions stay single-step, while complex questions can be decomposed
+  into sub-questions with Oracle Select AI.
+- **Oracle-grounded RAG layer**: the retriever gives the SQL generator business
+  context from schema knowledge, KPI definitions, business rules, SQL patterns,
+  dataset documentation, previous analyses, and glossary terms.
+- **Safe SQL generation and validation**: SQL is generated as a read-only query,
+  then validated before execution to block unsafe operations such as `DELETE`,
+  `UPDATE`, `DROP`, `INSERT`, or `MERGE`.
+- **Reflector agent for correction**: failed SQL, missing SQL, or empty result
+  sets can be detected and sent through a reflection step to request corrected
+  SQL instead of silently returning a poor answer.
+- **Conversation-aware memory**: the system distinguishes between transforming
+  the visible cached result and modifying the previous SQL. This supports prompts
+  like "which of them contain Dixon", "explain this", "for 2024 only", and
+  "compare this product across years".
+- **Confidence scoring**: the API exposes a confidence value based on support
+  checks, generation status, execution status, and fallback behavior. The UI
+  surfaces this as high or low confidence so users know when to double-check.
+- **Explainability by design**: the interface exposes how the answer was produced:
+  retrieved context, support check, SQL reasoning, validation, execution status,
+  and answer provider.
+- **Oracle infrastructure integration**: the system is designed around Oracle
+  Autonomous Database, Oracle Vector Search, Oracle Select AI, and OCI Generative
+  AI services rather than an isolated local prototype.
 
 ## Key Capabilities
 
@@ -116,16 +163,9 @@ scripts/            Seed DB, embed schema, run benchmark
 
 ## Team
 
-This was a collaborative hackathon build delivered by **Team 4**.
-
-| Member | Background | Slice |
-|---|---|---|
-| Omar | AI | Orchestration, critic, model routing |
-| Hasan | AI | Planner, SQL generator, LLM client + prompts |
-| Zayad | AI | Retrieval / RAG, memory, follow-up handling |
-| Asad | Data Science (MSc) | Summariser, evaluation harness, golden datasets |
-| Mehdi | CS (undergrad) | FastAPI service, Streamlit UI, deployment |
-| Abdul Qayyum | CS (undergrad) | Database, vector store, safety/obfuscation |
+This was a collaborative hackathon build delivered by **Team 4**. The project was
+developed as a team effort across agent design, Oracle integration, RAG, SQL
+safety, backend services, frontend experience, evaluation, and presentation.
 
 Full file-level ownership and Day 1/2/3 plan: [`docs/OWNERSHIP.md`](docs/OWNERSHIP.md).
 
